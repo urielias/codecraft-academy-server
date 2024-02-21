@@ -1,12 +1,10 @@
-from .models import User, UserProfile
+from .models import User
 from rest_framework import serializers
 from django.contrib.auth import authenticate
+from rest_framework.exceptions import AuthenticationFailed
 
 
-class UserSerializer(serializers.ModelSerializer):
-    first_name = serializers.CharField(write_only=True, required=True)
-    last_name = serializers.CharField(write_only=True, required=True)
-
+class SignupSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ['id', 'username', 'password', 'email',
@@ -25,16 +23,9 @@ class UserSerializer(serializers.ModelSerializer):
         return username
 
     def create(self, validated_data):
-        first_name = validated_data.pop('first_name', "")
-        last_name = validated_data.pop('last_name', "")
         user = User.objects.create_user(
-            username=validated_data['username'],
-            email=validated_data['email'],
-            user_type=User.UserType.STUDENT
-        )
+            user_type=User.UserType.STUDENT, **validated_data)
         user.set_password(validated_data['password'])
-        UserProfile.objects.create(
-            user=user, first_name=first_name, last_name=last_name)
         return user
 
 
@@ -42,8 +33,20 @@ class LoginSerializer(serializers.Serializer):
     username = serializers.CharField()
     password = serializers.CharField()
 
-    def validate_username(self, username):
-        return username
+    def validate(self, attrs):
+        username = attrs.get('username')
+        password = attrs.get('password')
+        user = authenticate(username=username, password=password)
 
-    def validate_password(self, password):
-        return password
+        if user:
+            return user
+        else:
+            raise AuthenticationFailed('Incorrect username or password')
+
+
+class UserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ['id', 'username', 'password', 'email',
+                  'user_type', 'first_name', 'last_name']
+        extra_kwargs = {'password': {'write_only': True}}
