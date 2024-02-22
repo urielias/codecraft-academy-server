@@ -3,7 +3,7 @@ from rest_framework.test import APITestCase
 
 from users.models import User
 
-from .models import Course, CourseStudent, Section, TextElement
+from .models import Course, CourseStudent, Section, TextElement, Resource
 
 
 class CourseListViewTests(APITestCase):
@@ -67,6 +67,11 @@ class CourseDetailViewTests(APITestCase):
         # Create a course
         self.course = Course.objects.create(
             name='Test Course', description='Test Description', teacher=self.teacher)
+
+        # Create a resource
+        self.resource = Resource.objects.create(
+            course=self.course, name='Test Resource', url='resource_url'
+        )
 
         # Create a section
         self.section = Section.objects.create(

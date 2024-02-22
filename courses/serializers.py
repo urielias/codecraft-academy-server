@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from .models import Course, Section
+from .models import Course, Section, Resource
 
 
 class ElementSerializer(serializers.Serializer):
@@ -27,13 +27,21 @@ class SectionSerializer(serializers.ModelSerializer):
         return ElementSerializer(combined_sorted, many=True).data
 
 
+class ResourceSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Resource
+        fields = ['name', 'url']
+
+
 class CourseSerializer(serializers.ModelSerializer):
     sections = SectionSerializer(many=True, read_only=True)
+    resources = ResourceSerializer(many=True, read_only=True)
     teacher_name = serializers.CharField(source='teacher.name', read_only=True)
 
     class Meta:
         model = Course
-        fields = ['name', 'description', 'teacher_name', 'rating', 'sections']
+        fields = ['name', 'description', 'teacher_name',
+                  'rating', 'sections', 'resources']
 
 
 class CoursePreviewSerializer(serializers.ModelSerializer):
