@@ -5,11 +5,12 @@ from rest_framework.response import Response
 from rest_framework.authtoken.models import Token
 
 from .models import User
-from .permissions import IsStudentUser, IsTeacherUser
+from .permissions import IsAuthenticated, IsStudentUser, IsTeacherUser
 from .serializers import LoginSerializer, SignupSerializer, UserSerializer
 
 
-def get_user_data_token(user):
+# Helper for getting user tokens
+def get_user_data_token(user: User):
     token, _ = Token.objects.get_or_create(user=user)
     user_data = UserSerializer(user).data
     user_data["token"] = token.key
@@ -18,19 +19,21 @@ def get_user_data_token(user):
 
 
 class SignupAPIView(APIView):
+    # Signup endpoint
     def post(self, request):
         serializer = SignupSerializer(data=request.data)
 
         if not serializer.is_valid():
             return Response({}, status=403)
 
-        user = serializer.save()
+        user: User = serializer.save()
         user_data = get_user_data_token(user)
 
         return Response(user_data, status=200)
 
 
 class LoginAPIView(APIView):
+    # Login endpoint
     def post(self, request):
         serializer = LoginSerializer(data=request.data)
 
@@ -44,7 +47,8 @@ class LoginAPIView(APIView):
 
 
 class FetchStudents(generics.ListAPIView):
-    permission_classes = [IsStudentUser]
+    # Student fetch endpoint
+    permission_classes = [IsAuthenticated, IsStudentUser]
     serializer_class = UserSerializer
 
     def get_queryset(self):
@@ -59,7 +63,8 @@ class FetchStudents(generics.ListAPIView):
 
 
 class FetchTeachers(generics.ListAPIView):
-    permission_classes = [IsTeacherUser]
+    # Teacher fetch endpoint
+    permission_classes = [IsAuthenticated, IsTeacherUser]
     serializer_class = UserSerializer
 
     def get_queryset(self):

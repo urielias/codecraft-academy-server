@@ -1,3 +1,8 @@
 from django.contrib import admin
 
-# Register your models here.
+from .models import Course, CourseStudent, Section, TextElement, VideoElement, Resource
+
+
+@admin.register(Course, CourseStudent, Section, TextElement, VideoElement, Resource)
+class CourseAdmin(admin.ModelAdmin):
+    pass
