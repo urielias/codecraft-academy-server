@@ -69,7 +69,7 @@ class FetchTeachers(generics.ListAPIView):
 
     def get_queryset(self):
         queryset = User.objects.all().filter(user_type=User.UserType.TEACHER)
-        search = self.request.query_params.get("search", None)
+        search: str = self.request.query_params.get("search", None)
 
         if search is not None and search != "":
             queryset = queryset.filter(Q(first_name__icontains=search) | Q(

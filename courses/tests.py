@@ -20,7 +20,7 @@ class CourseListViewTests(APITestCase):
         self.course2 = Course.objects.create(
             name='Course 2', description='Desc 2', rating=4, teacher=self.teacher_user)
 
-        # Enroll student in course1
+        # Enroll student
         CourseStudent.objects.create(
             student=self.student_user, course=self.course1)
 
@@ -35,6 +35,7 @@ class CourseListViewTests(APITestCase):
         self.client.force_authenticate(user=self.student_user)
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, 200)
+
         # Verify the enrolled and teaching fields
         for course_data in response.data:
             if course_data['name'] == 'Course 1':
@@ -48,6 +49,7 @@ class CourseListViewTests(APITestCase):
         self.client.force_authenticate(user=self.teacher_user)
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, 200)
+
         # Verify the enrolled and teaching fields
         for course_data in response.data:
             self.assertTrue(course_data['teaching'])
@@ -86,7 +88,6 @@ class CourseDetailViewTests(APITestCase):
         # Enroll the student in the course
         CourseStudent.objects.create(student=self.student, course=self.course)
 
-        # URL for the course detail view
         self.url = reverse('course_detail', kwargs={'id': self.course.pk})
 
     def test_access_by_teacher(self):
@@ -107,3 +108,96 @@ class CourseDetailViewTests(APITestCase):
     def test_access_by_unauthenticated_user(self):
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, 401)
+
+
+class StudentEnrollViewTests(APITestCase):
+    def setUp(self):
+        # Create users
+        self.student_user = User.objects.create(
+            first_name='Student',
+            last_name='S1',
+            username='student',
+            password='testpass123',
+            user_type=User.UserType.STUDENT)
+        self.teacher_user = User.objects.create(
+            first_name='Teacher',
+            last_name='T1',
+            username='teacher',
+            password='testpass123',
+            user_type=User.UserType.TEACHER
+        )
+
+        # Create course
+        self.course = Course.objects.create(
+            name="Test Course", description="Test Description", teacher=self.teacher_user)
+
+        self.enroll_url = lambda course_id: reverse(
+            'course_enroll', kwargs={'course_id': course_id})
+
+    def test_student_enrollment_success(self):
+        self.client.force_authenticate(user=self.student_user)
+        response = self.client.post(self.enroll_url(self.course.pk))
+        self.assertEqual(response.status_code, 201)
+        self.assertTrue(CourseStudent.objects.filter(
+            student=self.student_user, course=self.course).exists())
+
+    def test_enrollment_unauthorized(self):
+        self.client.logout()
+        response = self.client.post(self.enroll_url(self.course.pk))
+        self.assertEqual(response.status_code, 401)
+
+    def test_student_already_enrolled(self):
+        # Enroll student
+        CourseStudent.objects.create(
+            student=self.student_user, course=self.course)
+
+        self.client.force_authenticate(user=self.student_user)
+        response = self.client.post(self.enroll_url(self.course.pk))
+        self.assertEqual(response.status_code, 400)
+
+
+class StudentRemoveViewTests(APITestCase):
+    def setUp(self):
+        # Create users
+        self.student_user = User.objects.create(
+            first_name='Student',
+            last_name='S1',
+            username='student',
+            password='testpass123',
+            user_type=User.UserType.STUDENT)
+        self.teacher_user = User.objects.create(
+            first_name='Teacher',
+            last_name='T1',
+            username='teacher',
+            password='testpass123',
+            user_type=User.UserType.TEACHER
+        )
+
+        # Create course
+        self.course = Course.objects.create(
+            name="Test Course", description="Test Description", teacher=self.teacher_user)
+
+        self.remove_url = lambda student_id, course_id: reverse(
+            'course_remove', kwargs={'student_id': student_id, 'course_id': course_id})
+
+    def test_student_removal_success(self):
+        # Enroll student
+        CourseStudent.objects.create(
+            student=self.student_user, course=self.course)
+
+        self.client.force_authenticate(user=self.teacher_user)
+        response = self.client.delete(self.remove_url(
+            self.student_user.pk, self.course.pk))
+        self.assertEqual(response.status_code, 202)
+        self.assertFalse(CourseStudent.objects.filter(
+            student=self.student_user, course=self.course).exists())
+
+    def test_remove_student_unauthorized(self):
+        # Enroll student
+        CourseStudent.objects.create(
+            student=self.student_user, course=self.course)
+
+        self.client.force_authenticate(user=self.student_user)
+        response = self.client.delete(self.remove_url(
+            self.student_user.pk, self.course.pk))
+        self.assertEqual(response.status_code, 403)

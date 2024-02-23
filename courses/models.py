@@ -9,9 +9,12 @@ class Course(models.Model):
     description = models.TextField(blank=True, default='')
     rating = models.IntegerField(default=0)
 
-    def student_enrolled(self, student_id: str):
+    def student_enrolled(self, student: User):
         return CourseStudent.objects.filter(
-            student_id=student_id, course=self).exists()
+            student=student, course=self).exists()
+
+    def is_course_teacher(self, teacher: User):
+        return self.teacher == teacher
 
 
 class CourseStudent(models.Model):
