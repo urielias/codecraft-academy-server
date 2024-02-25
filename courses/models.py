@@ -4,10 +4,12 @@ from users.models import User
 
 class Course(models.Model):
     teacher = models.ForeignKey(
-        User, on_delete=models.CASCADE, related_name='courses')
+        User, on_delete=models.CASCADE, related_name='courses_taught')
     name = models.CharField(max_length=200)
     description = models.TextField(blank=True, default='')
     rating = models.IntegerField(default=0)
+    students = models.ManyToManyField(
+        User, through='CourseStudent', related_name='courses_enrolled')
 
     def student_enrolled(self, student: User):
         return CourseStudent.objects.filter(
