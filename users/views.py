@@ -33,18 +33,11 @@ class SignupAPIView(APIView):
 
         Allows new users to register to the system. Upon successful registration,
         it also provides an authentication token for immediate login capability.
+
+        On POST request with user signup data, creates the user and returns its data and token 
     """
 
     def post(self, request):
-        """
-            Handles POST requests to create a new user account.
-
-            Args:
-                request: The HTTP request object containing the user's signup data.
-
-            Returns:
-                Response: An HTTP response with the new user's data and token, or an error message.
-        """
         serializer = SignupSerializer(data=request.data)
 
         if not serializer.is_valid():
@@ -61,18 +54,11 @@ class LoginAPIView(APIView):
         API view for user login.
 
         Authenticates the user and returns an authentication token if the credentials are valid.
+
+        On POST request with user login data, logs the user in and returns its data and token 
     """
 
     def post(self, request):
-        """
-            Handles POST requests for user login.
-
-            Args:
-                request: The HTTP request object containing the user's login credentials.
-
-            Returns:
-                Response: An HTTP response with the user's data and token if authentication succeeds, or an error message.
-        """
         serializer = LoginSerializer(data=request.data)
 
         if not serializer.is_valid():
@@ -89,19 +75,12 @@ class LogoutAPIView(APIView):
         API view for user logout.
 
         Invalidates the user's authentication token, effectively logging them out.
+
+        on POST request, uses data from the request headers to log out a user by deleting their authentication token.
     """
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
-        """
-            Handles POST requests to log out a user by deleting their authentication token.
-
-            Args:
-                request: The HTTP request object.
-
-            Returns:
-                Response: An HTTP response indicating successful logout or an error message.
-        """
         try:
             token = Token.objects.get(user=request.user)
             token.delete()

@@ -86,12 +86,6 @@ class ChatHistoryTests(APITestCase):
     """
 
     def setUp(self):
-        """
-            Sets up the necessary data for the tests.
-
-            Creates three users and a chat room between the first two users, then populates the chat room with messages.
-            It also constructs the URL for accessing the chat history endpoint.
-        """
         self.user1 = User.objects.create_user(
             'user1', 'user1@example.com', 'password123')
         self.user2 = User.objects.create_user(
@@ -111,34 +105,22 @@ class ChatHistoryTests(APITestCase):
                            'room_id': self.chat_room.id})
 
     def test_retrieve_chat_history_success(self):
-        """
-            Tests successful retrieval of chat history for a member of the chat room.
-        """
         self.client.force_authenticate(user=self.user1)
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(response.data), 2)
 
     def test_authentication_required(self):
-        """
-            Tests that authentication is required to access the chat history.
-        """
         self.client.logout()
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, 401)
 
     def test_permission_check_member_of_room(self):
-        """
-            Tests that only members of the chat room can retrieve its history.
-        """
         self.client.force_authenticate(user=self.user3)
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, 403)
 
     def test_chat_room_not_found(self):
-        """
-            Tests handling of requests for non-existing chat rooms.
-        """
         self.client.force_authenticate(user=self.user1)
         non_existing_id = uuid4()
         url = reverse('chat_history', kwargs={'room_id': non_existing_id})

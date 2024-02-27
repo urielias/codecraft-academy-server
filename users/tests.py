@@ -13,9 +13,6 @@ class AuthenticationTests(APITestCase):
     """
 
     def setUp(self):
-        """
-            Prepares data and endpoints for testing authentication processes.
-        """
         self.signup_url = reverse('signup')
         self.login_url = reverse('login')
         self.logout_url = reverse('logout')
@@ -46,47 +43,32 @@ class AuthenticationTests(APITestCase):
         self.user.save()
 
     def test_signup_success(self):
-        """
-            Verifies that a new user can sign up and receives a token upon successful registration.
-        """
         response = self.client.post(
-            self.signup_url, self.signup_data, format='json')
+            self.signup_url, self.signup_data)
         self.assertEqual(response.status_code, 200)
         self.assertIn('token', response.data)
 
     def test_signup_invalid_data(self):
-        """
-            Ensures that the signup process validates data correctly and rejects invalid inputs.
-        """
         invalid_data = self.signup_data.copy()
         invalid_data['email'] = 'invalid'
         response = self.client.post(
-            self.signup_url, invalid_data, format='json')
+            self.signup_url, invalid_data)
         self.assertEqual(response.status_code, 403)
 
     def test_login_success(self):
-        """
-            Tests that a user can log in with valid credentials and receives a token.
-        """
         response = self.client.post(
             self.login_url, self.login_data)
         self.assertEqual(response.status_code, 200)
         self.assertIn('token', response.data)
 
     def test_login_invalid_credentials(self):
-        """
-            Confirms that the login process rejects incorrect credentials.
-        """
         response = self.client.post(self.login_url, {
             'username': self.login_data['username'],
             'password': 'wrongpassword',
-        }, format='json')
+        })
         self.assertEqual(response.status_code, 401)
 
     def test_logout_success(self):
-        """
-            Checks that a user can log out, effectively invalidating their authentication token.
-        """
         response = self.client.post(self.login_url, self.login_data)
         self.client.credentials(
             HTTP_AUTHORIZATION='Token ' + response.data['token'])
@@ -105,9 +87,6 @@ class UserFetchingTests(APITestCase):
     """
 
     def setUp(self):
-        """
-            Sets up user instances and authentication tokens for testing user list fetching.
-        """
         self.list_students_url = reverse('list_students')
         self.list_teachers_url = reverse('list_teachers')
         self.users = []
@@ -142,48 +121,36 @@ class UserFetchingTests(APITestCase):
             self.users.append(temp_user)
 
     def test_get_students_success(self):
-        """
-            Validates successful retrieval of a list of students when requested by an authenticated user.
-        """
         auth_user = self.users[0]
         token = Token.objects.create(user=auth_user)
         self.client.credentials(HTTP_AUTHORIZATION='Token ' + token.key)
 
-        response = self.client.get(self.list_students_url, format='json')
+        response = self.client.get(self.list_students_url)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(response.data), 2)
 
     def test_get_students_search_success(self):
-        """
-            Tests the search functionality on the student list endpoint to ensure correct filtering.
-        """
         auth_user = self.users[0]
         token = Token.objects.create(user=auth_user)
         self.client.credentials(HTTP_AUTHORIZATION='Token ' + token.key)
 
         response = self.client.get(self.list_students_url, {
-                                   'search': 'Last2'}, format='json')
+                                   'search': 'Last2'})
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(response.data), 1)
 
     def test_get_teachers_success(self):
-        """
-            Verifies that the list of teachers can be successfully retrieved by an authenticated user.
-        """
         auth_user = self.users[2]
         token = Token.objects.create(user=auth_user)
         self.client.credentials(HTTP_AUTHORIZATION='Token ' + token.key)
 
-        response = self.client.get(self.list_teachers_url, format='json')
+        response = self.client.get(self.list_teachers_url)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(response.data), 1)
 
     def test_get_teachers_unauth(self):
-        """
-            Ensures that unauthorized requests are properly rejected from accessing teacher data.
-        """
         auth_user = self.users[0]
         token = Token.objects.create(user=auth_user)
         self.client.credentials(HTTP_AUTHORIZATION='Token ' + token.key)
-        response = self.client.get(self.list_teachers_url, format='json')
+        response = self.client.get(self.list_teachers_url)
         self.assertEqual(response.status_code, 403)

@@ -13,17 +13,7 @@ class IsAuthenticated(BasePermission):
             has_permission: Checks if the request comes from an authenticated user.
     """
 
-    def has_permission(self, request, view):
-        """
-            Determines if the request should be permitted based on the user's authentication status.
-
-            Args:
-                request: The current request instance.
-                view: The view which is being accessed.
-
-            Returns:
-                bool: True if the user is authenticated, False otherwise.
-        """
+    def has_permission(self, request):
         return bool(request.user and request.user.is_authenticated)
 
 
@@ -39,17 +29,7 @@ class IsStudentUser(BasePermission):
             has_permission: Checks if the user is a student or a teacher.
     """
 
-    def has_permission(self, request, view):
-        """
-            Determines if the request should be permitted based on the user's role.
-
-            Args:
-                request: The current request instance.
-                view: The view which is being accessed.
-
-            Returns:
-                bool: True if the user is a student or teacher, False otherwise.
-        """
+    def has_permission(self, request):
         return request.user.user_type in [User.UserType.STUDENT, User.UserType.TEACHER]
 
 
@@ -64,15 +44,5 @@ class IsTeacherUser(BasePermission):
             has_permission: Checks if the user has a teacher role.
     """
 
-    def has_permission(self, request, view):
-        """
-            Determines if the request should be permitted based on the user being a teacher.
-
-            Args:
-                request: The current request instance.
-                view: The view which is being accessed.
-
-            Returns:
-                bool: True if the user is a teacher, False otherwise.
-        """
+    def has_permission(self, request):
         return request.user.user_type == User.UserType.TEACHER
