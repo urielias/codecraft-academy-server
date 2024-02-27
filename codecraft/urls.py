@@ -2,11 +2,11 @@ from django.contrib import admin
 from django.urls import path, include
 
 urlpatterns = [
+    # User management URLs
+    path('', include('users.urls')),
+
     # Admin site URLs
     path('admin/', admin.site.urls),
-
-    # User management URLs
-    path('users/', include('users.urls')),
 
     # Course management URLs
     path('courses/', include('courses.urls')),
