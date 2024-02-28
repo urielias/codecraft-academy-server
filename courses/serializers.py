@@ -17,6 +17,7 @@ class ElementSerializer(serializers.Serializer):
             content (CharField): The content of the element.
             order (IntegerField): The display order of the element within its section.
     """
+    id = serializers.IntegerField()
     type = serializers.CharField()
     content = serializers.CharField()
     order = serializers.IntegerField()
@@ -39,12 +40,12 @@ class SectionSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Section
-        fields = ['name', 'elements']
+        fields = ['id', 'name', 'elements']
 
     def get_elements(self, obj):
-        text_elements = [{'type': 'text', 'content': elem.content,
+        text_elements = [{'id': elem.pk, 'type': 'text', 'content': elem.content,
                           'order': elem.order} for elem in obj.text_elements.all()]
-        video_elements = [{'type': 'video', 'content': elem.content,
+        video_elements = [{'id': elem.pk, 'type': 'video', 'content': elem.content,
                            'order': elem.order} for elem in obj.video_elements.all()]
         combined = text_elements + video_elements
         combined_sorted = sorted(combined, key=lambda x: x['order'])
@@ -64,7 +65,7 @@ class ResourceSerializer(serializers.ModelSerializer):
     """
     class Meta:
         model = Resource
-        fields = ['name', 'url']
+        fields = ['id', 'name', 'url']
 
 
 class CourseSerializer(serializers.ModelSerializer):
@@ -89,7 +90,7 @@ class CourseSerializer(serializers.ModelSerializer):
     teaching = serializers.SerializerMethodField()
     sections = SectionSerializer(many=True, read_only=True)
     resources = ResourceSerializer(many=True, read_only=True)
-    teacher_name = serializers.CharField(source='teacher.name', read_only=True)
+    teacher_name = serializers.SerializerMethodField(read_only=True)
     teacher = serializers.PrimaryKeyRelatedField(
         queryset=User.objects.all(),
         write_only=True
@@ -107,6 +108,10 @@ class CourseSerializer(serializers.ModelSerializer):
     def get_teaching(self, obj):
         user_id = self.context.get('user_id', None)
         return obj.teacher.id == user_id
+
+    def get_teacher_name(self, obj):
+        teacher = obj.teacher
+        return str(teacher)
 
     def to_representation(self, instance):
         data = super().to_representation(instance)

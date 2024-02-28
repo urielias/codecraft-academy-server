@@ -13,7 +13,7 @@ class IsAuthenticated(BasePermission):
             has_permission: Checks if the request comes from an authenticated user.
     """
 
-    def has_permission(self, request):
+    def has_permission(self, request, _):
         return bool(request.user and request.user.is_authenticated)
 
 
@@ -29,7 +29,7 @@ class IsStudentUser(BasePermission):
             has_permission: Checks if the user is a student or a teacher.
     """
 
-    def has_permission(self, request):
+    def has_permission(self, request, _):
         return request.user.user_type in [User.UserType.STUDENT, User.UserType.TEACHER]
 
 
@@ -44,5 +44,5 @@ class IsTeacherUser(BasePermission):
             has_permission: Checks if the user has a teacher role.
     """
 
-    def has_permission(self, request):
+    def has_permission(self, request, _):
         return request.user.user_type == User.UserType.TEACHER
